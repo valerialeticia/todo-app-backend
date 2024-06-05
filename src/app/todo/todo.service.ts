@@ -16,7 +16,7 @@ export class TodoService {
 
   async findOneOrFail(id: string) {
     try {
-      return await this.todoRepository.findOneBy({ id: id });
+      return await this.todoRepository.findOneOrFail({ where: { id } });
     } catch (error) {
       throw new NotFoundException(error.message);
     }
