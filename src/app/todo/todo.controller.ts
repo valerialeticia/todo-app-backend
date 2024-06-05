@@ -11,6 +11,8 @@ import {
   Put,
 } from '@nestjs/common';
 import { TodoService } from './todo.service';
+import { CreateTodoDto } from './dto/create-todo.dto';
+import { UpdateTodoDto } from './dto/update-todo.dto';
 
 @Controller('api/v1/todos')
 export class TodoController {
@@ -22,7 +24,7 @@ export class TodoController {
   }
 
   @Post() // endpoint do tipo post, no qual irá criar o todo.
-  async create(@Body() body) {
+  async create(@Body() body: CreateTodoDto) {
     return await this.todoService.create(body);
   }
 
@@ -32,7 +34,10 @@ export class TodoController {
   }
 
   @Put(':id') // endpoint do tipo put, que irá receber um id e precisar de um payload para assim atualizar o todo.
-  async update(@Param('id', new ParseUUIDPipe()) id: string, @Body() body) {
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: UpdateTodoDto,
+  ) {
     return await this.todoService.update(id, body);
   }
 
