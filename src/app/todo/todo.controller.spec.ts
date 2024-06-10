@@ -31,7 +31,7 @@ describe('TodoController', () => {
             create: jest.fn().mockResolvedValue(newTodoEntity),
             findOneOrFail: jest.fn().mockResolvedValue(tododEntityList[0]),
             update: jest.fn().mockResolvedValue(updatedTodoEntity),
-            deleteById: jest.fn(),
+            deleteById: jest.fn().mockReturnValue(undefined),
           },
         },
       ], // mockando lista de providers
@@ -116,8 +116,28 @@ describe('TodoController', () => {
       const result = await todoController.update('1', body);
 
       expect(result).toEqual(updatedTodoEntity);
+      expect(todoService.update).toHaveBeenCalledTimes(1);
+      expect(todoService.update).toHaveBeenCalledWith('1', body);
+    });
+
+    it('deve lançar um erro quando o update quebrar', () => {
+      jest.spyOn(todoService, 'update').mockRejectedValueOnce(new Error());
+
+      expect(todoController.update).rejects.toThrow();
     });
   });
 
-  describe('delete', () => {});
+  describe('delete', () => {
+    it('deve deletar a task com sucesso', async () => {
+      const result = await todoController.destroy('1');
+
+      expect(result).toBeUndefined();
+    });
+
+    it('deve lançar uma exceção quando o delete falhar', () => {
+      jest.spyOn(todoService, 'deleteById').mockRejectedValueOnce(new Error());
+
+      expect(todoController.destroy).rejects.toThrow();
+    });
+  });
 });
