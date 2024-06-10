@@ -1,6 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TodoController } from './todo.controller';
 import { TodoService } from './todo.service';
+import { TodoEntity } from './entity/todo.entity';
+import { CreateTodoDto } from './dto/create-todo.dto';
+import { UpdateTodoDto } from './dto/update-todo.dto';
+
+const tododEntityList: TodoEntity[] = [
+  new TodoEntity({ id: '1', task: 'task1', isDone: 0 }),
+  new TodoEntity({ id: '2', task: 'task2', isDone: 0 }),
+  new TodoEntity({ id: '3', task: 'task3', isDone: 0 }),
+];
+
+const newTodoEntity = new TodoEntity({ task: 'test', isDone: 0 });
+
+const updatedTodoEntity = new TodoEntity({ task: 'task1', isDone: 1 });
 
 describe('TodoController', () => {
   let todoController: TodoController;
@@ -14,10 +27,10 @@ describe('TodoController', () => {
           // mockando apenas o provide que quero sem precisar fazer teste de integração e em seguida mockar todas as suas funções
           provide: TodoService,
           useValue: {
-            findAll: jest.fn(),
-            create: jest.fn(),
-            findOneOrFail: jest.fn(),
-            update: jest.fn(),
+            findAll: jest.fn().mockResolvedValue(tododEntityList),
+            create: jest.fn().mockResolvedValue(newTodoEntity),
+            findOneOrFail: jest.fn().mockResolvedValue(tododEntityList[0]),
+            update: jest.fn().mockResolvedValue(updatedTodoEntity),
             deleteById: jest.fn(),
           },
         },
@@ -28,7 +41,7 @@ describe('TodoController', () => {
     todoService = module.get<TodoService>(TodoService);
   });
 
-  it('should be defined', () => {
+  it('o controller e o service devem estar definidos', () => {
     expect(todoController).toBeDefined();
     expect(todoService).toBeDefined();
   });
@@ -37,7 +50,74 @@ describe('TodoController', () => {
     it('deve retornar a todolist Entity com sucesso', async () => {
       const result = await todoController.index();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual(tododEntityList);
+      expect(typeof result).toEqual('object');
+      expect(todoService.findAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('deve ser lançado um erro quando o index quebrar', () => {
+      jest.spyOn(todoService, 'findAll').mockRejectedValueOnce(new Error());
+
+      expect(todoController.index()).rejects.toThrow();
     });
   });
+
+  describe('create', () => {
+    it('deve criar um novo item do todo com sucesso', async () => {
+      const body: CreateTodoDto = {
+        task: 'test',
+        isDone: 0,
+      };
+
+      const result = await todoController.create(body);
+
+      expect(result).toEqual(newTodoEntity);
+      expect(todoService.create).toHaveBeenCalledTimes(1);
+      expect(todoService.create).toHaveBeenCalledWith(body);
+    });
+
+    it('deve lançar um erro quando o create quebrar', () => {
+      const body: CreateTodoDto = {
+        task: 'test',
+        isDone: 0,
+      };
+
+      jest.spyOn(todoService, 'create').mockRejectedValueOnce(new Error());
+
+      expect(todoController.create(body)).rejects.toThrow();
+    });
+  });
+
+  describe('show', () => {
+    it('deve exibir os dados de uma task com sucesso', async () => {
+      const result = await todoController.show('1');
+
+      expect(result).toEqual(tododEntityList[0]);
+      expect(todoService.findOneOrFail).toHaveBeenCalledTimes(1);
+      expect(todoService.findOneOrFail).toHaveBeenCalledWith('1');
+    });
+
+    it('deve lançar um erro quando show quebrar', () => {
+      jest
+        .spyOn(todoService, 'findOneOrFail')
+        .mockRejectedValueOnce(new Error());
+
+      expect(todoController.show('1')).rejects.toThrow();
+    });
+  });
+
+  describe('update', () => {
+    it('deve atualizar o item todo com sucesso', async () => {
+      const body: UpdateTodoDto = {
+        task: 'task1',
+        isDone: 1,
+      };
+
+      const result = await todoController.update('1', body);
+
+      expect(result).toEqual(updatedTodoEntity);
+    });
+  });
+
+  describe('delete', () => {});
 });
