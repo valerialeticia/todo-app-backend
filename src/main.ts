@@ -15,7 +15,12 @@ async function bootstrap() {
 
   SwaggerModule.setup('swagger', app, document); // endereço da doc swagger
 
-  app.useGlobalPipes(new ValidationPipe()); // definindo um validation pipe para todos os endpoints e controllers.
+  /* passando o param whitelist ele só vai atualizar o que está definido na DTO
+  /* e o forbidNonWhitelisted para só passar apenas o que vamos alterar
+  */
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+  ); // definindo um validation pipe para todos os endpoints e controllers.
   await app.listen(3000);
 }
 bootstrap();
